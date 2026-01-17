@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Crypto Slot Web3</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { 
+            background: #0d1117; color: #58a6ff; font-family: 'Segoe UI', sans-serif;
+            margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;
+        }
+        .crypto-card {
+            background: #161b22; border: 2px solid #30363d; border-radius: 20px;
+            padding: 20px; box-shadow: 0 0 40px #58a6ff33; width: 90%; max-width: 400px; text-align: center;
+        }
+        .wallet-btn {
+            background: #238636; color: white; border: none; padding: 10px 20px;
+            border-radius: 10px; font-weight: bold; margin-bottom: 20px; cursor: pointer;
+            transition: 0.3s;
+        }
+        .slot-box {
+            display: flex; gap: 8px; background: #010409; padding: 15px; border-radius: 12px;
+            border: 2px solid #58a6ff; margin-bottom: 20px;
+        }
+        .reel {
+            flex: 1; height: 70px; background: #0d1117; border-radius: 8px;
+            font-size: 35px; line-height: 70px; color: #fff;
+        }
+        .stats { background: #21262d; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-family: monospace; color: #00ff00; }
+        .spin-btn {
+            background: linear-gradient(180deg, #58a6ff, #1f6feb); color: white;
+            border: none; width: 100%; padding: 15px; border-radius: 12px;
+            font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px #11438a;
+        }
+        .spinning { animation: cryptoBlur 0.1s infinite; }
+        @keyframes cryptoBlur { 0% { opacity: 0.5; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+    </style>
+</head>
+<body>
+    <div class="crypto-card">
+        <button class="wallet-btn" id="walletBtn" onclick="connectWallet()">CONNECT TON WALLET</button>
+        
+        <div class="slot-box">
+            <div id="r1" class="reel">₿</div>
+            <div id="r2" class="reel">💎</div>
+            <div id="r3" class="reel">Ξ</div>
+            <div id="r4" class="reel">₮</div>
+            <div id="r5" class="reel">₿</div>
+        </div>
+
+        <div class="stats">
+            POOL: <span id="balance">0.50</span> TON <br>
+            BET: 0.01 TON
+        </div>
+
+        <button class="spin-btn" id="sBtn" onclick="spinCrypto()">MINT SPIN</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        let balance = 0.50;
+        const symbols = ['₿', 'Ξ', '💎', '₮', 'TON', 'SOL'];
+
+        function connectWallet() {
+            const btn = document.getElementById('walletBtn');
+            btn.innerText = "UQAz...89jL (Connected)";
+            btn.style.background = "#30363d";
+            tg.HapticFeedback.notificationOccurred('success');
+        }
+
+        function spinCrypto() {
+            if (balance < 0.01) return alert("Low TON Balance!");
+            balance -= 0.01;
+            document.getElementById('balance').innerText = balance.toFixed(2);
+            
+            const btn = document.getElementById('sBtn');
+            btn.disabled = true;
+            
+            const reels = [1,2,3,4,5].map(i => document.getElementById('r'+i));
+            reels.forEach(r => r.classList.add('spinning'));
+
+            setTimeout(() => {
+                const res = reels.map(r => {
+                    r.classList.remove('spinning');
+                    const sym = symbols[Math.floor(Math.random() * symbols.length)];
+                    r.innerText = sym;
+                    return sym;
+                });
+
+                const counts = {};
+                res.forEach(x => counts[x] = (counts[x] || 0) + 1);
+                let win = false;
+                for(let s in counts) if(counts[s] >= 3) win = true;
+
+                if (win) {
+                    balance += 0.05;
+                    document.getElementById('balance').innerText = balance.toFixed(2);
+                    tg.HapticFeedback.notificationOccurred('success');
+                    alert("SMART CONTRACT WIN: +0.05 TON");
+                }
+                btn.disabled = false;
+            }, 800);
+        }
+    </script>
+</body>
+</html>
