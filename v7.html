@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ULTRA TON CASINO</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root { --gold: #ffd700; --white-glow: 0 0 15px rgba(255,255,255,0.5); }
+        body { background: #000; color: white; font-family: sans-serif; margin: 0; overflow: hidden; }
+        
+        /* Спільна підсвітка екрану */
+        .screen-glow { position: fixed; inset: 0; pointer-events: none; border: 4px solid rgba(255,255,255,0.2); box-shadow: inset 0 0 50px rgba(255,255,255,0.1); z-index: 100; }
+
+        /* ЛОБІ */
+        #lobby { display: flex; flex-direction: column; align-items: center; height: 100vh; background: radial-gradient(circle, #1a1a2e, #000); padding: 20px; overflow-y: auto; }
+        .bal-box { background: rgba(0,0,0,0.7); border: 2px solid var(--gold); padding: 15px 40px; border-radius: 50px; color: #00ff00; font-size: 24px; font-weight: bold; margin: 20px 0; }
+        .game-card { width: 90%; max-width: 350px; background: #222; border-radius: 15px; margin: 10px 0; padding: 20px; display: flex; align-items: center; gap: 20px; border-left: 5px solid var(--gold); cursor: pointer; }
+        
+        /* ІГРОВІ ЕКРАНИ */
+        .game-screen { display: none; position: fixed; inset: 0; flex-direction: column; align-items: center; justify-content: center; z-index: 50; }
+        .back-btn { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.5); color: white; border: 1px solid white; padding: 10px; border-radius: 10px; }
+
+        /* Елементи гри */
+        .container { display: flex; gap: 15px; margin: 40px 0; }
+        .box { width: 80px; height: 100px; border-radius: 15px; position: relative; cursor: pointer; transition: 0.3s; border: 2px solid white; }
+        .box.up { transform: translateY(-50px); }
+        .item { width: 25px; height: 25px; border-radius: 50%; background: white; position: absolute; bottom: 10px; left: 27px; display: none; }
+
+        /* Стилі для конкретних ігор */
+        #game-thimbles { background: radial-gradient(circle, #8b0000, #200); }
+        #game-thimbles .box { background: linear-gradient(to bottom, #ffd700, #b8860b); border-radius: 50% 50% 10% 10%; }
+        
+        #game-safes { background: radial-gradient(circle, #001f3f, #000); }
+        #game-safes .box { background: #333; border: 2px solid #58a6ff; box-shadow: 0 0 10px #58a6ff; }
+        
+        #game-cards { background: radial-gradient(circle, #004d00, #000); }
+        #game-cards .box { background: white; color: black; font-size: 40px; text-align: center; line-height: 100px; }
+
+        .btn-pay { background: #238636; color: white; border: none; padding: 15px 30px; border-radius: 50px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="screen-glow"></div>
+
+    <div id="lobby">
+        <h1 style="color:var(--gold)">TON ULTRA CASINO</h1>
+        <div class="bal-box"><span id="total-bal">0.10</span> TON</div>
+        
+        <div class="game-card" onclick="openGame('thimbles')">
+            <span style="font-size:40px">🏆</span>
+            <div><h3>Golden Thimbles</h3><p>Наперстки x2.0</p></div>
+        </div>
+
+        <div class="game-card" onclick="openGame('safes')">
+            <span style="font-size:40px">💎</span>
+            <div><h3>Crypto Safes</h3><p>Сейфи x2.5</p></div>
+        </div>
+
+        <div class="game-card" onclick="openGame('cards')">
+            <span style="font-size:40px">🃏</span>
+            <div><h3>Magic Cards</h3><p>Карти x3.0</p></div>
+        </div>
+
+        <button class="btn-pay" onclick="deposit()">💰 ПОПОВНИТИ БАЛАНС</button>
+    </div>
+
+    <div id="game-area" class="game-screen">
+        <button class="back-btn" onclick="closeGame()">⬅ НАЗАД</button>
+        <h2 id="game-title">ГРА</h2>
+        <div id="game-msg" style="font-weight:bold; height:30px">Обери один!</div>
+        <div class="container" id="container">
+            </div>
+        <div style="font-size:20px">БАЛАНС: <span class="current-bal">0.10</span> TON</div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        let balance = 0.10;
+        let activeGame = '';
+        let canPlay = true;
+        const myWallet = "UQBLhA0jSJthqPS8UNRAvuq6HMUMsM56vbQZtTPCPhKEyPM5";
+
+        function updateUI() {
+            document.getElementById('total-bal').innerText = balance.toFixed(2);
+            document.querySelectorAll('.current-bal').forEach(el => el.innerText = balance.toFixed(2));
+        }
+
+        function deposit() {
+            tg.openLink(`ton://transfer/${myWallet}?amount=1000000000`);
+            balance += 1.0; updateUI();
+        }
+
+        function openGame(type) {
+            activeGame = type;
+            const area = document.getElementById('game-area');
+            const cont = document.getElementById('container');
+            const title = document.getElementById('game-title');
+            area.style.display = 'flex';
+            area.id = 'game-' + type; // Зміна фону
+            cont.innerHTML = '';
+            
+            title.innerText = type.toUpperCase();
+
+            // Створюємо 3 елементи
+            for(let i=0; i<3; i++) {
+                let box = document.createElement('div');
+                box.className = 'box';
+                box.id = 'box' + i;
+                box.onclick = () => play(i);
+                let item = document.createElement('div');
+                item.className = 'item';
+                item.id = 'item' + i;
+                if(type === 'cards') box.innerText = '❓';
+                box.appendChild(item);
+                cont.appendChild(box);
+            }
+        }
+
+        function closeGame() {
+            document.getElementById('game-area').style.display = 'none';
+        }
+
+        function play(chosen) {
+            if(!canPlay || balance < 0.01) return;
+            canPlay = false;
+            balance -= 0.01; updateUI();
+
+            // Твій прибуток 80% (гравець виграє в 20% випадків)
+            let isWin = Math.random() < 0.20;
+            let winId = isWin ? chosen : [0,1,2].filter(i => i !== chosen)[Math.floor(Math.random()*2)];
+
+            // Коефіцієнти
+            let mult = activeGame === 'thimbles' ? 2 : (activeGame === 'safes' ? 2.5 : 3);
+
+            document.getElementById('item'+winId).style.display = 'block';
+            document.getElementById('box'+winId).classList.add('up');
+
+            if(chosen === winId) {
+                let winAmt = 0.01 * mult;
+                balance += winAmt;
+                document.getElementById('game-msg').innerText = "ВИГРАШ +" + winAmt.toFixed(3);
+                tg.HapticFeedback.notificationOccurred('success');
+            } else {
+                document.getElementById('game-msg').innerText = "ПРОГРАШ";
+                tg.HapticFeedback.notificationOccurred('error');
+            }
+
+            setTimeout(() => {
+                document.querySelectorAll('.box').forEach(b => { b.classList.remove('up'); });
+                document.querySelectorAll('.item').forEach(i => i.style.display = 'none');
+                document.getElementById('game-msg').innerText = "Обери один!";
+                updateUI();
+                canPlay = true;
+            }, 2000);
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
