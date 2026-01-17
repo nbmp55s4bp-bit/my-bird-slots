@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Casino Deluxe</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { 
+            background: #050505 url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
+            color: white; font-family: 'Arial Black', sans-serif;
+            margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;
+        }
+        .casino-frame {
+            border: 8px solid #444; border-radius: 20px; background: #111;
+            padding: 15px; box-shadow: 0 0 50px #ff005577; width: 90%; max-width: 400px;
+        }
+        .header { color: gold; font-size: 24px; margin-bottom: 10px; text-shadow: 2px 2px #000; }
+        .slot-container {
+            display: flex; gap: 5px; background: #222; padding: 10px; border-radius: 10px;
+            border: 3px solid #ffd700; overflow: hidden;
+        }
+        .reel {
+            flex: 1; height: 100px; background: linear-gradient(#333, #111, #333);
+            border-radius: 5px; font-size: 45px; line-height: 100px; text-align: center;
+        }
+        .controls {
+            margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;
+        }
+        .info-panel {
+            grid-column: span 2; background: #000; padding: 10px; border-radius: 5px;
+            border: 1px solid #ffd700; color: #00ff00; font-family: monospace; font-size: 18px;
+        }
+        button {
+            background: linear-gradient(#ff0055, #990033); color: white; border: none;
+            padding: 15px; border-radius: 10px; font-size: 18px; font-weight: bold;
+            box-shadow: 0 4px #660022; cursor: pointer;
+        }
+        button:active { box-shadow: 0 0; transform: translateY(4px); }
+        .spin-btn { background: linear-gradient(#ffd700, #b8860b); color: black; }
+        .spinning { animation: roll 0.1s infinite linear; }
+        @keyframes roll { 0% { transform: translateY(-10px); } 100% { transform: translateY(10px); } }
+    </style>
+</head>
+<body>
+    <div class="header">🎰 LUXE CASINO</div>
+    <div class="casino-frame">
+        <div class="slot-container">
+            <div id="r1" class="reel">💎</div>
+            <div id="r2" class="reel">7️⃣</div>
+            <div id="r3" class="reel">🍒</div>
+            <div id="r4" class="reel">🍀</div>
+            <div id="r5" class="reel">🔔</div>
+        </div>
+        <div class="controls">
+            <div class="info-panel">
+                BALANCE: <span id="balance">5000</span> | BET: <span id="bet">100</span>
+            </div>
+            <button onclick="changeBet(-50)">BET -</button>
+            <button onclick="changeBet(50)">BET +</button>
+            <button class="spin-btn" style="grid-column: span 2;" id="spinBtn" onclick="spin()">SPIN</button>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        let balance = 5000;
+        let bet = 100;
+        const symbols = ['💎', '7️⃣', '🍒', '🍀', '🔔', '🍇', '🍋'];
+
+        function changeBet(val) {
+            if (bet + val >= 50 && bet + val <= 1000) {
+                bet += val;
+                document.getElementById('bet').innerText = bet;
+            }
+        }
+
+        function spin() {
+            if (balance < bet) return alert("NO CASH!");
+            balance -= bet;
+            document.getElementById('balance').innerText = balance;
+            
+            const btn = document.getElementById('spinBtn');
+            btn.disabled = true;
+            
+            const reels = [1,2,3,4,5].map(i => document.getElementById('r'+i));
+            reels.forEach(r => r.classList.add('spinning'));
+
+            setTimeout(() => {
+                const results = reels.map(r => {
+                    r.classList.remove('spinning');
+                    const res = symbols[Math.floor(Math.random() * symbols.length)];
+                    r.innerText = res;
+                    return res;
+                });
+
+                // Проста логіка виграшу: якщо є хоча б 3 однакові
+                const counts = {};
+                results.forEach(s => counts[s] = (counts[s] || 0) + 1);
+                let win = 0;
+                for(let s in counts) {
+                    if(counts[s] >= 3) win = bet * counts[s];
+                }
+
+                if (win > 0) {
+                    balance += win;
+                    alert("WIN! +" + win);
+                    document.getElementById('balance').innerText = balance;
+                }
+                btn.disabled = false;
+            }, 800);
+        }
+    </script>
+</body>
+</html>
