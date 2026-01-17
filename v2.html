@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bird Slots Pro</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { background: radial-gradient(circle, #2e8b57, #111); color: white; text-align: center; font-family: sans-serif; margin: 0; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .slot-machine { background: rgba(0,0,0,0.8); border: 4px solid gold; border-radius: 20px; padding: 20px; box-shadow: 0 0 20px gold; }
+        .reels { display: flex; gap: 10px; margin-bottom: 20px; }
+        .reel { width: 60px; height: 80px; background: #222; border-radius: 10px; font-size: 50px; line-height: 80px; }
+        .spinning { animation: blur 0.1s infinite; }
+        @keyframes blur { from { filter: blur(0px); transform: translateY(0); } to { filter: blur(4px); transform: translateY(5px); } }
+        button { background: gold; border: none; padding: 15px 40px; font-size: 20px; border-radius: 50px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🦜 BIRD SLOTS V2</h1>
+    <div class="slot-machine">
+        <div class="reels">
+            <div id="r1" class="reel">🦜</div>
+            <div id="r2" class="reel">🦜</div>
+            <div id="r3" class="reel">🦜</div>
+        </div>
+        <button id="btn" onclick="spin()">КРУТИТИ</button>
+    </div>
+    <p>Баланс: <span id="bal">1000</span> 🪙</p>
+    <script>
+        const symbols = ['🦜', '🦉', '🐥', '💎', '🍒'];
+        let balance = 1000;
+        function spin() {
+            if (balance < 10) return;
+            balance -= 10; document.getElementById('bal').innerText = balance;
+            const btn = document.getElementById('btn'); btn.disabled = true;
+            const rs = [document.getElementById('r1'), document.getElementById('r2'), document.getElementById('r3')];
+            rs.forEach(r => r.classList.add('spinning'));
+            setTimeout(() => {
+                rs.forEach(r => {
+                    r.classList.remove('spinning');
+                    r.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+                });
+                btn.disabled = false;
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
